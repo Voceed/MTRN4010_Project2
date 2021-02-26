@@ -88,12 +88,13 @@ function main()
 end
 
 % -------------------------------------------------------
-
+%Function that update its global position (STILL WORKING ON IT)
 function [X_new] = update_positionX(X_old, vel, omega, dt)
-    theta = omega*dt;
-    dy = vel*cos(theta)*dt;
-    dx = vel*sin(theta)*dt;
-    X_new = X_old + [dx; dy; theta];
+    theta = X_old(3);
+    dx = vel*cos(theta)*dt;
+    dy = vel*sin(theta)*dt;
+    dtheta = omega*dt;
+    X_new = X_old + [dx; dy; dtheta];
 end
 
 %Function for parsing the binary scan; extracting ranges and intensities of reflections.
