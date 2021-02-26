@@ -7,7 +7,11 @@
 
 % You can modify this example, for solving some parts of the projects.
 
-function ShowData2021_Example2()
+function YifuYe_Project2_z5111338()
+    main();
+end
+
+function main()
     
     %Here, we load the data
     Data = load('Measurements_AAS01.mat');
@@ -17,7 +21,8 @@ function ShowData2021_Example2()
     angleScan = (0:360)/2;
     
     [r,~] = GetRangeAndIntensityFromRawScan(Data.scans(:,1));
-    figure(2); clf(); hL = plot(angleScan,r,'.'); 
+    figure(2); clf();
+    hL = plot(angleScan,r,'.'); 
     zoom on; grid on;
     title('showing LiDAR scans (in polar, local frame)'); 
     ylabel('range (m)'); xlabel('angle (degrees)'); axis([0,180,0,20]); 
