@@ -9,7 +9,7 @@ function main()
     N=length(times) ;
     %.....................................
     speed = ones(N,1);
-    steering = (2+ 20*cos(times*2*pi/20))*pi/180; % (behavior of certain crazy driver)
+    steering = sin(times*pi/16.2); % (behavior of certain crazy driver)
     % In the arrays ¡°speed[]¡± and ¡°steering[]¡±
     % you can define the time evolution of the speed & steering inputs (it is a simulation!)
     %.....................................

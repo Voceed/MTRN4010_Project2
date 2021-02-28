@@ -71,7 +71,7 @@ function ShowData2021_Example2()
             ii = find(I>0);
             set(hL2,'xdata',angleScan(ii),'ydata',r(ii));
             
-            pause(0.04);  %Short pause, just to see some animation, more slowly.You may change this.
+            pause(0.015);  %Short pause, just to see some animation, more slowly.You may change this.
             
         end
     end

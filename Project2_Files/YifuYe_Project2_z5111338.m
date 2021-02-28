@@ -18,19 +18,38 @@ function main()
     Data = load('Measurements_AAS01.mat');
     Data = Data.A; 
 
-    %Here, we create a figure in which we will show the LiDAR scans, soon.
-    angleScan = (0:360)/2;
+    %Here, we create X-span for figures.
+    angleScan = (0:360)/2;      %Polar
     
+    %Get ranges from LIDAR
     [r,~] = GetRangeAndIntensityFromRawScan(Data.scans(:,1));
-    figure(2); clf();
-    hL = plot(angleScan, r, '.'); 
+    %Open figure(1), and set its window properties.
+    figure(1); clf();
+    set(figure(1), 'Position', [700,150,600,750]);
+    
+    %First plot, the polar view.
+    subplot(2,1,1);
+    hold on;
+    axis([0,180,0,20]);
     zoom on; grid on;
     title('showing LiDAR scans (in polar, local frame)'); 
-    ylabel('range (m)'); xlabel('angle (degrees)'); axis([0,180,0,20]); 
-
-    hold on;
-    hL2 = plot(0, 0, '.r');   %For showing brillant points, later.
+    ylabel('range (m)'); xlabel('angle (degrees)');
     legend({'points','brilliant points'});
+    hL1 = plot(angleScan, r, '.');  %For showing all laser points.
+    hL2 = plot(0, 0, '.r');         %For showing brillant points, later.
+    hold off;
+    
+    %Second plot, the cartesian view.
+    subplot(2,1,2);
+    hold on;
+    axis([-10,10,-2,12]);
+    zoom on; grid on;
+    title('showing LiDAR scans (in Cartesian, local frame)'); 
+    ylabel('Y (m)'); xlabel('X (m)');
+    legend({'points','brilliant points'});
+    hL3 = plot(0, 0, '.');  %For showing all laser points.
+    hL4 = plot(0, 0, '.r'); %For showing brillant points, later.
+    hold off;
     
     i0 = 1;             %You should start at i0 = 1 or close.
     X = [0;0;pi/2] ;	%Initial pose. [x; y; theta]
@@ -60,34 +79,48 @@ function main()
         %So you keep estimating the state vector X.
         %X(t+dt) = F( X(t), inputs(t),..)
         X = update_positionX(X, NewSpeed, deg2rad(NewAngRate), dt);
-        disp(X);
+        %disp(X);
         
         %Now, if there is a LiDAR scan at this time?
         if (indexScan > 1)
-            
             %Extract ranges and intensities, of the 361 "pixels"
             %flip function applied to the raw data, not sure??
-            [r,I] = GetRangeAndIntensityFromRawScan(flip(Data.scans(:, indexScan)));
+            [r,I] = GetRangeAndIntensityFromRawScan(Data.scans(:, indexScan));
             
             ProcessLiDAR(r, I, X);
             %Here you may process the LiDAR
             %data. variable "X" is the current pose of the platform
             %(assuming you keep estimating it). If your procesing of the
             %LiDAR data does require it.
-
+            
+            %Polar to Cart
+            cartPos = polar2cart(r, angleScan);
+            cartX = cartPos(1, :);
+            cartY = cartPos(2, :);
             %Update new lasers' plot
-            set(hL, 'ydata', r);
+            set(hL1, 'ydata', r);
+            set(hL3, 'xdata', cartX, 'ydata', cartY);
             %Update the brilliant plot
             ii = find(I > 0);
             set(hL2, 'xdata', angleScan(ii), 'ydata', r(ii));
+            set(hL4, 'xdata', cartX(ii), 'ydata', cartY(ii));
             
-            pause(0.01);  %Short pause, just to see some animation, more slowly.You may change this.
+            pause(0.001);  %Short pause, just to see some animation, more slowly.You may change this.
             
         end
     end
 end
 
 % -------------------------------------------------------
+%Function that can transfer polar to cartesian frame.
+function [cart_pos] = polar2cart(ranges, degrees)
+    cart_pos = zeros(2, 361);
+    %Be careful, ranges is 361 by 1 matrix, do it transpose.
+    %Also, function inputs are in degrees, change it to radian.
+    cart_pos(1, :) = ranges'.*cos(deg2rad(degrees));
+    cart_pos(2, :) = ranges'.*sin(deg2rad(degrees));
+end
+
 %Function that update its global position (STILL WORKING ON IT)
 function [X_new] = update_positionX(X_old, vel, omega, dt)
     theta = X_old(3);
