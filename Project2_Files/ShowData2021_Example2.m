@@ -29,12 +29,12 @@ function ShowData2021_Example2()
     i0 = 1;   %You should start at i0 = 1 or close.
     
     X = [0;0;pi/2] ;	%Initial pose. You will need it.
-    t0 = 0.001*double(Data.t(i0));	%Initial time.  
+    t0 = 0.0001*double(Data.t(i0));	%Initial time.  
     
     L = Data.L;	%Number of samples in this dataset.
     i0 = i0 + 1;
     for i = i0:L
-        t = 0.001*double(Data.t(i));
+        t = 0.0001*double(Data.t(i));
         m = Data.Z(:,i);    %Data, related to sample-i
         
         NewSpeed = double(m(1))*0.001;          %Speed in m/s
