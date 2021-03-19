@@ -51,6 +51,7 @@ function main()
     ylabel('Y (m)'); xlabel('X (m)');
     hL3 = plot(0, 0, '.');  %For showing all laser points.
     hL4 = plot(0, 0, '.r'); %For showing brillant points, later.
+    hL4_ooi = plot(0, 0, '.');
     legend({'points','brilliant points'});
     hold off;
     
@@ -99,7 +100,6 @@ function main()
         
         %Now, if there is a LiDAR scan at this time?
         if (indexScan > 1)
-
             %Extract ranges and intensities, of the 361 "pixels"
             [r,I] = GetRangeAndIntensityFromRawScan(Data.scans(:, indexScan));
             
@@ -115,31 +115,80 @@ function main()
             cartY = cartPos(2, :);
             %Find high intense-index
             ii = find(I > 0);
+            [clust_array, valid_clust]  = get_clusters_pos(cartX(ii), cartY(ii));
             %Update new lasers' plot and brilliant points
-            figure(1);
             %\/\/\/\/\/\/\/\/\/\
-            hold on;
             set(hL1, 'ydata', r);
             set(hL2, 'xdata', angleScan(ii), 'ydata', r(ii));
-            hold off;
             %\/\/\/\/\/\/\/\/\/\
-            hold on;
             set(hL3, 'xdata', cartX, 'ydata', cartY);
             set(hL4, 'xdata', cartX(ii), 'ydata', cartY(ii));
-            hold off;
             %\/\/\/\/\/\/\/\/\/\
-            hold on;
             set(hL5, 'xdata', X_array(1, :), 'ydata', X_array(2, :));
-            hold off;
-            
+            %\/\/\/\/\/\/\/\/\/\
+            if (valid_clust == 0)
+                set(hL4_ooi, 'xdata', 0, 'ydata', 0, 'Marker', '.', 'MarkerSize', 1);
+            else
+                set(hL4_ooi, 'xdata', clust_array(1, :), 'ydata', clust_array(2, :),...
+                'Marker', 'o', 'MarkerSize', 10);
+            end
             
             pause(0);  %Short pause, just to see some animation, more slowly.You may change this.
-            
         end
     end
 end
 
 % -------------------------------------------------------
+
+function [pos_array, valid_clust] = get_clusters_pos(Xii, Yii)
+    
+    valid_clust = 1;
+    if (isempty(Xii))
+        pos_array = [0; 0];
+        valid_clust = 0;
+        return;
+    end
+    if (length(Xii) == 1)
+        pos_array = [Xii; Yii];
+        return;
+    end
+    
+    %Create the clusters position matrix
+    thresh_hold = 0.1; %In meters
+    j = 1;
+    r = 1;
+    for i = 1:(length(Xii) - 1)
+        distance = sqrt((Yii(i+1)-Yii(i))^2 + (Xii(i+1)-Xii(i))^2);
+        if distance <= thresh_hold
+            pos_mat(r, j) = Xii(i);
+            pos_mat(r, j+1) = Yii(i);
+            pos_mat(r+1, j) = Xii(i+1);
+            pos_mat(r+1, j+1) = Yii(i+1);
+            r = r + 1;
+        else
+            j = j + 2;
+            r = 1;
+        end
+    end
+    
+    %Get Xii and Yii average and insert it into the pos_array
+    xn = 1; yn = 1;
+    if (rem(length(pos_mat(1, :)), 2) == 0)
+        for i = 1:length(pos_mat(1, :))
+            if (rem(i, 2) == 1)
+                pos_array(1, xn) = mean(nonzeros(pos_mat(:, i)));
+                xn = xn + 1;
+            else
+                pos_array(2, yn) = mean(nonzeros(pos_mat(:, i)));
+                yn = yn + 1;
+            end
+        end
+    else
+        pos_array = [0; 0];
+        valid_clust = 0;
+    end
+    
+end
 
 %Function that can calculate the gyro bias by inputting Data Struct.
 function [bias] = get_gyro_bias(Data)
